@@ -1,0 +1,180 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><link rel="stylesheet" type="text/css" href="style.css" /><script type="text/javascript" src="highlight.js"></script></head><body><pre><span class="hs-pragma">{-# LANGUAGE NoImplicitPrelude #-}</span><span>
+</span><a name="line-2"></a><span>
+</span><a name="line-3"></a><span class="hs-keyword">module</span><span> </span><span class="hs-identifier">FunAppMon</span><span> </span><span class="hs-keyword">where</span><span>
+</span><a name="line-4"></a><span>
+</span><a name="line-5"></a><span class="hs-keyword">import</span><span> </span><span class="hs-identifier">BasePrelude</span><span>
+</span><a name="line-6"></a><span>
+</span><a name="line-7"></a><span class="hs-comment">-- * Overview</span><span>
+</span><a name="line-8"></a><span>
+</span><a name="line-9"></a><span class="hs-comment">-- $ Let's gather the class descriptions from</span><span>
+</span><a name="line-10"></a><span class="hs-comment">-- @&lt;https://hackage.haskell.org/package/base-4.10.0.0/docs/Data-Functor.html Data.Functor&gt;@,</span><span>
+</span><a name="line-11"></a><span class="hs-comment">-- @&lt;https://hackage.haskell.org/package/base-4.10.0.0/docs/Control-Applicative.html Control.Applicative&gt;@, and</span><span>
+</span><a name="line-12"></a><span class="hs-comment">-- @&lt;https://hackage.haskell.org/package/base-4.10.0.0/docs/Control-Monad.html Control.Monad&gt;@ in one place:</span><span>
+</span><a name="line-13"></a><span class="hs-comment">--</span><span>
+</span><a name="line-14"></a><span class="hs-comment">-- &gt; class Functor f where</span><span>
+</span><a name="line-15"></a><span class="hs-comment">-- &gt;   (&lt;$&gt;) :: (a -&gt; b) -&gt; f a -&gt; f b      -- operator version of fmap</span><span>
+</span><a name="line-16"></a><span class="hs-comment">-- &gt;</span><span>
+</span><a name="line-17"></a><span class="hs-comment">-- &gt; class Functor f =&gt; Applicative f where</span><span>
+</span><a name="line-18"></a><span class="hs-comment">-- &gt;   (&lt;*&gt;) :: f (a -&gt; b) -&gt; f a -&gt; f b</span><span>
+</span><a name="line-19"></a><span class="hs-comment">-- &gt;   pure :: a -&gt; f a</span><span>
+</span><a name="line-20"></a><span class="hs-comment">-- &gt;</span><span>
+</span><a name="line-21"></a><span class="hs-comment">-- &gt; class Applicative f =&gt; Monad f where</span><span>
+</span><a name="line-22"></a><span class="hs-comment">-- &gt;   (=&lt;&lt;) :: (a -&gt; f b) -&gt; f a -&gt; f b    -- flipped bind operator</span><span>
+</span><a name="line-23"></a><span class="hs-comment">-- &gt;   return :: a -&gt; f a</span><span>
+</span><a name="line-24"></a><span class="hs-comment">--</span><span>
+</span><a name="line-25"></a><span class="hs-comment">-- The meaning of @class /Foo/ x =&gt; /Bar/ x where ...@ is that every /Bar/ is a</span><span>
+</span><a name="line-26"></a><span class="hs-comment">-- /Foo/. So every @Monad@ is an @Applicative@, and every @Applicative@ is a</span><span>
+</span><a name="line-27"></a><span class="hs-comment">-- @Functor@.</span><span>
+</span><a name="line-28"></a><span class="hs-comment">--</span><span>
+</span><a name="line-29"></a><span class="hs-comment">-- For pedagogy, I am using the operator version of @fmap@, and the flipped version of the usual &quot;bind&quot; operator.</span><span>
+</span><a name="line-30"></a><span class="hs-comment">--</span><span>
+</span><a name="line-31"></a><span class="hs-comment">-- &gt; (&lt;$&gt;) = fmap</span><span>
+</span><a name="line-32"></a><span class="hs-comment">-- &gt; (=&lt;&lt;) = flip (&gt;&gt;=)</span><span>
+</span><a name="line-33"></a><span class="hs-comment">--</span><span>
+</span><a name="line-34"></a><span class="hs-comment">-- This is just to use the most similar versions of all these operators. In</span><span>
+</span><a name="line-35"></a><span class="hs-comment">-- actual code, you are free to use whichever version makes sense. For example:</span><span>
+</span><a name="line-36"></a><span class="hs-comment">--</span><span>
+</span><a name="line-37"></a><span class="hs-comment">-- &gt; getCaps :: IO [String]</span><span>
+</span><a name="line-38"></a><span class="hs-comment">-- &gt; getCaps = fmap toUpper . words &lt;$&gt; getLine</span><span>
+</span><a name="line-39"></a><span class="hs-comment">--</span><span>
+</span><a name="line-40"></a><span class="hs-comment">-- This hypothetical code fragment uses both versions of @fmap@,</span><span>
+</span><a name="line-41"></a><span class="hs-comment">-- because it seems convenient to do so.</span><span>
+</span><a name="line-42"></a><span>
+</span><a name="line-43"></a><span class="hs-comment">-- ** @pure@ and @return@</span><span>
+</span><a name="line-44"></a><span>
+</span><a name="line-45"></a><span class="hs-comment">-- $ The first thing to note is that @pure@ and @return@ are identical. If you</span><span>
+</span><a name="line-46"></a><span class="hs-comment">-- examine</span><span>
+</span><a name="line-47"></a><span class="hs-comment">-- &lt;https://hackage.haskell.org/package/base-4.10.0.0/docs/src/GHC.Base.html the source&gt;,</span><span>
+</span><a name="line-48"></a><span class="hs-comment">-- you will find this definition:</span><span>
+</span><a name="line-49"></a><span class="hs-comment">--</span><span>
+</span><a name="line-50"></a><span class="hs-comment">-- &gt;   return = pure</span><span>
+</span><a name="line-51"></a><span class="hs-comment">--</span><span>
+</span><a name="line-52"></a><span class="hs-comment">-- Both @pure@ and @return@ &quot;inject&quot; a value into the applicative or monadic type:</span><span>
+</span><a name="line-53"></a><span class="hs-comment">--</span><span>
+</span><a name="line-54"></a><span class="hs-comment">-- &gt;&gt;&gt; pure 5 :: Maybe Int</span><span>
+</span><a name="line-55"></a><span class="hs-comment">-- Just 5</span><span>
+</span><a name="line-56"></a><span class="hs-comment">-- &gt;&gt;&gt; return 'a' :: Either String Char</span><span>
+</span><a name="line-57"></a><span class="hs-comment">-- Right 'a'</span><span>
+</span><a name="line-58"></a><span class="hs-comment">--</span><span>
+</span><a name="line-59"></a><span class="hs-comment">-- Why would you write @pure 5@ rather than @Just 5@? Well, suppose you</span><span>
+</span><a name="line-60"></a><span class="hs-comment">-- anticipated that your applicative or monadic type might change in the</span><span>
+</span><a name="line-61"></a><span class="hs-comment">-- future... if you use @pure@ you future-proof yourself. @pure@ says, &quot;inject</span><span>
+</span><a name="line-62"></a><span class="hs-comment">-- this value into the appropriate context, whatever that is.&quot;</span><span>
+</span><a name="line-63"></a><span class="hs-comment">--</span><span>
+</span><a name="line-64"></a><span class="hs-comment">-- In industrial strength Haskell applications, the context can be very</span><span>
+</span><a name="line-65"></a><span class="hs-comment">-- involved, and having to reassemble it yourself just to inject a value into</span><span>
+</span><a name="line-66"></a><span class="hs-comment">-- that context can be tedious at best!</span><span>
+</span><a name="line-67"></a><span>
+</span><a name="line-68"></a><span class="hs-comment">-- ** @fmap@, @\&lt;*\&gt;@, and @=&lt;&lt;@</span><span>
+</span><a name="line-69"></a><span>
+</span><a name="line-70"></a><span class="hs-comment">-- $ Let's gather the signatures of the operators together:</span><span>
+</span><a name="line-71"></a><span class="hs-comment">--</span><span>
+</span><a name="line-72"></a><span class="hs-comment">-- &gt;   (&lt;$&gt;) ::   (a -&gt;   b) -&gt; f a -&gt; f b  -- Functor</span><span>
+</span><a name="line-73"></a><span class="hs-comment">-- &gt;   (&lt;*&gt;) :: f (a -&gt;   b) -&gt; f a -&gt; f b  -- Applicative</span><span>
+</span><a name="line-74"></a><span class="hs-comment">-- &gt;   (=&lt;&lt;) ::   (a -&gt; f b) -&gt; f a -&gt; f b  -- Monad</span><span>
+</span><a name="line-75"></a><span class="hs-comment">--</span><span>
+</span><a name="line-76"></a><span class="hs-comment">-- First, observe the obvious similarity between these signatures. They vary</span><span>
+</span><a name="line-77"></a><span class="hs-comment">-- only in the presence, absence, and position of the @f@ type in the first</span><span>
+</span><a name="line-78"></a><span class="hs-comment">-- argument.</span><span>
+</span><a name="line-79"></a><span class="hs-comment">--</span><span>
+</span><a name="line-80"></a><span class="hs-comment">-- What is this @f@? Various guides will use metaphors, compare it to a</span><span>
+</span><a name="line-81"></a><span class="hs-comment">-- burrito, etc, but I mostly think of it as a structure, or a context.</span><span>
+</span><a name="line-82"></a><span class="hs-comment">--</span><span>
+</span><a name="line-83"></a><span class="hs-comment">-- The canonical first example of an @f@ in most guides is @Maybe@:</span><span>
+</span><a name="line-84"></a><span class="hs-comment">--</span><span>
+</span><a name="line-85"></a><span class="hs-comment">-- &gt;&gt;&gt; id     (+3) &lt;$&gt; Just 2  -- Functor</span><span>
+</span><a name="line-86"></a><span class="hs-comment">-- Just 5</span><span>
+</span><a name="line-87"></a><span class="hs-comment">-- &gt;&gt;&gt; Just   (+3) &lt;*&gt; Just 2  -- Applicative</span><span>
+</span><a name="line-88"></a><span class="hs-comment">-- Just 5</span><span>
+</span><a name="line-89"></a><span class="hs-comment">-- &gt;&gt;&gt; Just . (+3) =&lt;&lt; Just 2  -- Monad</span><span>
+</span><a name="line-90"></a><span class="hs-comment">-- Just 5</span><span>
+</span><a name="line-91"></a><span class="hs-comment">--</span><span>
+</span><a name="line-92"></a><span class="hs-comment">-- I'm using @id@ just to keep the text aligned: @id (+3) == (+3)@.</span><span>
+</span><a name="line-93"></a><span class="hs-comment">--</span><span>
+</span><a name="line-94"></a><span class="hs-comment">-- Note that these example constructions exactly follow the above signatures.</span><span>
+</span><a name="line-95"></a><span class="hs-comment">--</span><span>
+</span><a name="line-96"></a><span class="hs-comment">--   * The @Functor@ example says, &quot;apply this function to what's inside the</span><span>
+</span><a name="line-97"></a><span class="hs-comment">--   @f@ context, and return the same context with the result.&quot;</span><span>
+</span><a name="line-98"></a><span class="hs-comment">--</span><span>
+</span><a name="line-99"></a><span class="hs-comment">--   * The @Applicative@ example says, &quot;within the @f@ context, apply the</span><span>
+</span><a name="line-100"></a><span class="hs-comment">--   function to the argument, combining the contexts.&quot;</span><span>
+</span><a name="line-101"></a><span class="hs-comment">--</span><span>
+</span><a name="line-102"></a><span class="hs-comment">--   * The @Monad@ example says, &quot;apply the function to what's inside the @f@</span><span>
+</span><a name="line-103"></a><span class="hs-comment">--   context, then create a new @f@ context to hold the result, combining the</span><span>
+</span><a name="line-104"></a><span class="hs-comment">--   new context with the input context.&quot;</span><span>
+</span><a name="line-105"></a><span class="hs-comment">--</span><span>
+</span><a name="line-106"></a><span class="hs-comment">-- Notice that @Applicative@ and @Monad@ refer to /combining/ the contexts.</span><span>
+</span><a name="line-107"></a><span class="hs-comment">-- (@Functor@ does not, because there is only the original context.)</span><span>
+</span><a name="line-108"></a><span class="hs-comment">--</span><span>
+</span><a name="line-109"></a><span class="hs-comment">-- That combining is pretty simple in the case of @Maybe@: if both contexts</span><span>
+</span><a name="line-110"></a><span class="hs-comment">-- are @Just@, the combined context is @Just@. Otherwise, if either or both of</span><span>
+</span><a name="line-111"></a><span class="hs-comment">-- the contexts is @Nothing@, the combined context is @Nothing@.</span><span>
+</span><a name="line-112"></a><span class="hs-comment">--</span><span>
+</span><a name="line-113"></a><span class="hs-comment">-- For a more complicated example, and to better exhibit the structural, or</span><span>
+</span><a name="line-114"></a><span class="hs-comment">-- contextual nature of @f@ let's use the tuple type, @(a,)@. The tuple type</span><span>
+</span><a name="line-115"></a><span class="hs-comment">-- carries extra information with it in its first element.</span><span>
+</span><a name="line-116"></a><span class="hs-comment">--</span><span>
+</span><a name="line-117"></a><span class="hs-comment">-- &gt;&gt;&gt; id             (+3)  &lt;$&gt; (&quot;apple&quot;, 2)  -- Functor</span><span>
+</span><a name="line-118"></a><span class="hs-comment">-- (&quot;apple&quot;,5)</span><span>
+</span><a name="line-119"></a><span class="hs-comment">-- &gt;&gt;&gt; (&quot;banana&quot;,     (+3)) &lt;*&gt; (&quot;apple&quot;, 2)  -- Applicative</span><span>
+</span><a name="line-120"></a><span class="hs-comment">-- (&quot;bananaapple&quot;,5)</span><span>
+</span><a name="line-121"></a><span class="hs-comment">-- &gt;&gt;&gt; (,) &quot;cherry&quot; . (+3)  =&lt;&lt; (&quot;apple&quot;, 2)  -- Monad</span><span>
+</span><a name="line-122"></a><span class="hs-comment">-- (&quot;applecherry&quot;,5)</span><span>
+</span><a name="line-123"></a><span class="hs-comment">--</span><span>
+</span><a name="line-124"></a><span class="hs-comment">-- I'm using @id@ just to keep the text aligned: @id (+3) == (+3)@.</span><span>
+</span><a name="line-125"></a><span class="hs-comment">--</span><span>
+</span><a name="line-126"></a><span class="hs-comment">-- The tuple type is carrying some context, @&quot;apple&quot;@ in this case, in its</span><span>
+</span><a name="line-127"></a><span class="hs-comment">-- first element. For @Applicative@ and @Monad@, they combine the contexts by</span><span>
+</span><a name="line-128"></a><span class="hs-comment">-- appending the strings. Indeed, if you </span><span>
+</span><a name="line-129"></a><span class="hs-comment">-- &lt;https://hackage.haskell.org/package/base-4.10.0.0/docs/src/GHC.Base.html#line-338 check the documentation&gt;,</span><span>
+</span><a name="line-130"></a><span class="hs-comment">-- you will see that the class instances have a @Monoid@ constraint, meaning</span><span>
+</span><a name="line-131"></a><span class="hs-comment">-- that the contexts must be combinable using @mappend@:</span><span>
+</span><a name="line-132"></a><span class="hs-comment">--</span><span>
+</span><a name="line-133"></a><span class="hs-comment">-- &gt; instance Monoid a =&gt; Applicative ((,) a) where</span><span>
+</span><a name="line-134"></a><span class="hs-comment">-- &gt;   (u, f) &lt;*&gt; (v, x) = (u `mappend` v, f x)</span><span>
+</span><a name="line-135"></a><span class="hs-comment">-- &gt;</span><span>
+</span><a name="line-136"></a><span class="hs-comment">-- &gt; instance Monoid a -&gt; Monad ((,) a) where</span><span>
+</span><a name="line-137"></a><span class="hs-comment">-- &gt;   k =&lt;&lt; (u, a) = case k a of (v, b) -&gt; (u `mappend` v, b)</span><span>
+</span><a name="line-138"></a><span class="hs-comment">--</span><span>
+</span><a name="line-139"></a><span class="hs-comment">-- Study these examples until you feel comfortable with them. You can fire up</span><span>
+</span><a name="line-140"></a><span class="hs-comment">-- @ghci@ and play around a bit.</span><span>
+</span><a name="line-141"></a><span>
+</span><a name="line-142"></a><span class="hs-comment">-- * Context</span><span>
+</span><a name="line-143"></a><span>
+</span><a name="line-144"></a><span class="hs-comment">-- $ Now look at how @Functor@, @Applicative@, and @Monad@ interact with context:</span><span>
+</span><a name="line-145"></a><span class="hs-comment">--</span><span>
+</span><a name="line-146"></a><span class="hs-comment">--   * @Functor@ does not change the context at all, you operate on the values</span><span>
+</span><a name="line-147"></a><span class="hs-comment">--   inside that context. Given the @(&quot;apple&quot;,)@ context, we produce the same</span><span>
+</span><a name="line-148"></a><span class="hs-comment">--   @(&quot;apple&quot;,)@ context.</span><span>
+</span><a name="line-149"></a><span class="hs-comment">--</span><span>
+</span><a name="line-150"></a><span class="hs-comment">--   * @Applicative@ combines contexts, but those contexts are already supplied</span><span>
+</span><a name="line-151"></a><span class="hs-comment">--   to the applicative operator. Given the @(&quot;banana&quot;,)@ and the @(&quot;apple&quot;,)@</span><span>
+</span><a name="line-152"></a><span class="hs-comment">--   contexts, we combine them to create the new @(&quot;bananaapple&quot;,)@ context.</span><span>
+</span><a name="line-153"></a><span class="hs-comment">--</span><span>
+</span><a name="line-154"></a><span class="hs-comment">--   * @Monad@ also combined the two contexts, but the critical difference is</span><span>
+</span><a name="line-155"></a><span class="hs-comment">--   that /we supplied the new context ourself/.  The @(&quot;cherry&quot;,)@ context was</span><span>
+</span><a name="line-156"></a><span class="hs-comment">--   provided by us, and we could have provided a different context, had we</span><span>
+</span><a name="line-157"></a><span class="hs-comment">--   chosen. We did not have that choice in the @Functor@ and @Applicative@</span><span>
+</span><a name="line-158"></a><span class="hs-comment">--   case.</span><span>
+</span><a name="line-159"></a><span class="hs-comment">--</span><span>
+</span><a name="line-160"></a><span class="hs-comment">-- &gt;&gt;&gt; let foo x = if odd x then (&quot; is odd&quot;, x) else (&quot; is even&quot;, x)</span><span>
+</span><a name="line-161"></a><span class="hs-comment">-- &gt;&gt;&gt; foo =&lt;&lt; (&quot;apple&quot;, 3)</span><span>
+</span><a name="line-162"></a><span class="hs-comment">-- (&quot;apple is odd&quot;,3)</span><span>
+</span><a name="line-163"></a><span class="hs-comment">-- &gt;&gt;&gt; foo =&lt;&lt; (&quot;apple&quot;, 4)</span><span>
+</span><a name="line-164"></a><span class="hs-comment">-- (&quot;apple is even&quot;,4)</span><span>
+</span><a name="line-165"></a><span class="hs-comment">--</span><span>
+</span><a name="line-166"></a><span class="hs-comment">-- We are able to decide the context or structure of the result after examining</span><span>
+</span><a name="line-167"></a><span class="hs-comment">-- the value. There is no way to do this with the @Applicative@ operator. I</span><span>
+</span><a name="line-168"></a><span class="hs-comment">-- encourage you to make the attempt until you convince yourself.</span><span>
+</span><a name="line-169"></a><span>
+</span><a name="line-170"></a><span class="hs-comment">-- * Summary</span><span>
+</span><a name="line-171"></a><span>
+</span><a name="line-172"></a><span class="hs-comment">-- $ @Functor@ allows you to perform computations within a context. That context</span><span>
+</span><a name="line-173"></a><span class="hs-comment">-- will not change.</span><span>
+</span><a name="line-174"></a><span class="hs-comment">--</span><span>
+</span><a name="line-175"></a><span class="hs-comment">-- @Applicative@ allows you to perform computations where every element of the</span><span>
+</span><a name="line-176"></a><span class="hs-comment">-- computation has a context, and those contexts are combined.</span><span>
+</span><a name="line-177"></a><span class="hs-comment">--</span><span>
+</span><a name="line-178"></a><span class="hs-comment">-- @Monad@ allows you to perform computations where you may /change/ the</span><span>
+</span><a name="line-179"></a><span class="hs-comment">-- context on the basis of the computation.</span><span>
+</span><a name="line-180"></a></pre></body></html>

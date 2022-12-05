@@ -1,0 +1,88 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><title>FunAppMon</title><link href="ocean.css" rel="stylesheet" type="text/css" title="Ocean" /><script src="haddock-util.js" type="text/javascript"></script><script src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML" type="text/javascript"></script><script type="text/javascript">//<![CDATA[
+window.onload = function () {pageLoad();setSynopsis("mini_FunAppMon.html");};
+//]]>
+</script></head><body><div id="package-header"><ul class="links" id="page-menu"><li><a href="src/FunAppMon.html">Source</a></li><li><a href="index.html">Contents</a></li><li><a href="doc-index.html">Index</a></li></ul><p class="caption">examples-0.1.0.0</p></div><div id="content"><div id="module-header"><table class="info"><tr><th>Safe Haskell</th><td>None</td></tr><tr><th>Language</th><td>Haskell2010</td></tr></table><p class="caption">FunAppMon</p></div><div id="table-of-contents"><p class="caption">Contents</p><ul><li><a href="#g:1">Overview</a><ul><li><a href="#g:2"><code>pure</code> and <code>return</code></a></li><li><a href="#g:3"><code>fmap</code>, <code>&lt;*&gt;</code>, and <code>=&lt;&lt;</code></a></li></ul></li><li><a href="#g:4">Context</a></li><li><a href="#g:5">Summary</a></li></ul></div><div id="synopsis"><p id="control.syn" class="caption expander" onclick="toggleSection('syn')">Synopsis</p><ul id="section.syn" class="hide" onclick="toggleSection('syn')"></ul></div><div id="interface"><h1 id="g:1">Overview</h1><div class="doc"><p>Let's gather the class descriptions from
+ <code><a href="https://hackage.haskell.org/package/base-4.10.0.0/docs/Data-Functor.html">Data.Functor</a></code>,
+ <code><a href="https://hackage.haskell.org/package/base-4.10.0.0/docs/Control-Applicative.html">Control.Applicative</a></code>, and
+ <code><a href="https://hackage.haskell.org/package/base-4.10.0.0/docs/Control-Monad.html">Control.Monad</a></code> in one place:</p><pre>class Functor f where
+  (&lt;$&gt;) :: (a -&gt; b) -&gt; f a -&gt; f b      -- operator version of fmap
+
+class Functor f =&gt; Applicative f where
+  (&lt;*&gt;) :: f (a -&gt; b) -&gt; f a -&gt; f b
+  pure :: a -&gt; f a
+
+class Applicative f =&gt; Monad f where
+  (=&lt;&lt;) :: (a -&gt; f b) -&gt; f a -&gt; f b    -- flipped bind operator
+  return :: a -&gt; f a</pre><p>The meaning of <code>class <em>Foo</em> x =&gt; <em>Bar</em> x where ...</code> is that every <em>Bar</em> is a
+ <em>Foo</em>. So every <code>Monad</code> is an <code>Applicative</code>, and every <code>Applicative</code> is a
+ <code>Functor</code>.</p><p>For pedagogy, I am using the operator version of <code>fmap</code>, and the flipped version of the usual &quot;bind&quot; operator.</p><pre>(&lt;$&gt;) = fmap
+(=&lt;&lt;) = flip (&gt;&gt;=)</pre><p>This is just to use the most similar versions of all these operators. In
+ actual code, you are free to use whichever version makes sense. For example:</p><pre>getCaps :: IO [String]
+getCaps = fmap toUpper . words &lt;$&gt; getLine</pre><p>This hypothetical code fragment uses both versions of <code>fmap</code>,
+ because it seems convenient to do so.</p></div><h2 id="g:2"><code>pure</code> and <code>return</code></h2><div class="doc"><p>The first thing to note is that <code>pure</code> and <code>return</code> are identical. If you
+ examine
+ <a href="https://hackage.haskell.org/package/base-4.10.0.0/docs/src/GHC.Base.html">the source</a>,
+ you will find this definition:</p><pre>  return = pure</pre><p>Both <code>pure</code> and <code>return</code> &quot;inject&quot; a value into the applicative or monadic type:</p><pre class="screen"><code class="prompt">&gt;&gt;&gt; </code><strong class="userinput"><code>pure 5 :: Maybe Int
+</code></strong>Just 5
+<code class="prompt">&gt;&gt;&gt; </code><strong class="userinput"><code>return 'a' :: Either String Char
+</code></strong>Right 'a'
+</pre><p>Why would you write <code>pure 5</code> rather than <code>Just 5</code>? Well, suppose you
+ anticipated that your applicative or monadic type might change in the
+ future... if you use <code>pure</code> you future-proof yourself. <code>pure</code> says, &quot;inject
+ this value into the appropriate context, whatever that is.&quot;</p><p>In industrial strength Haskell applications, the context can be very
+ involved, and having to reassemble it yourself just to inject a value into
+ that context can be tedious at best!</p></div><h2 id="g:3"><code>fmap</code>, <code>&lt;*&gt;</code>, and <code>=&lt;&lt;</code></h2><div class="doc"><p>Let's gather the signatures of the operators together:</p><pre>  (&lt;$&gt;) ::   (a -&gt;   b) -&gt; f a -&gt; f b  -- Functor
+  (&lt;*&gt;) :: f (a -&gt;   b) -&gt; f a -&gt; f b  -- Applicative
+  (=&lt;&lt;) ::   (a -&gt; f b) -&gt; f a -&gt; f b  -- Monad</pre><p>First, observe the obvious similarity between these signatures. They vary
+ only in the presence, absence, and position of the <code>f</code> type in the first
+ argument.</p><p>What is this <code>f</code>? Various guides will use metaphors, compare it to a
+ burrito, etc, but I mostly think of it as a structure, or a context.</p><p>The canonical first example of an <code>f</code> in most guides is <code>Maybe</code>:</p><pre class="screen"><code class="prompt">&gt;&gt;&gt; </code><strong class="userinput"><code>id     (+3) &lt;$&gt; Just 2  -- Functor
+</code></strong>Just 5
+<code class="prompt">&gt;&gt;&gt; </code><strong class="userinput"><code>Just   (+3) &lt;*&gt; Just 2  -- Applicative
+</code></strong>Just 5
+<code class="prompt">&gt;&gt;&gt; </code><strong class="userinput"><code>Just . (+3) =&lt;&lt; Just 2  -- Monad
+</code></strong>Just 5
+</pre><p>I'm using <code>id</code> just to keep the text aligned: <code>id (+3) == (+3)</code>.</p><p>Note that these example constructions exactly follow the above signatures.</p><ul><li>The <code>Functor</code> example says, &quot;apply this function to what's inside the
+   <code>f</code> context, and return the same context with the result.&quot;</li><li>The <code>Applicative</code> example says, &quot;within the <code>f</code> context, apply the
+   function to the argument, combining the contexts.&quot;</li><li>The <code>Monad</code> example says, &quot;apply the function to what's inside the <code>f</code>
+   context, then create a new <code>f</code> context to hold the result, combining the
+   new context with the input context.&quot;</li></ul><p>Notice that <code>Applicative</code> and <code>Monad</code> refer to <em>combining</em> the contexts.
+ (<code>Functor</code> does not, because there is only the original context.)</p><p>That combining is pretty simple in the case of <code>Maybe</code>: if both contexts
+ are <code>Just</code>, the combined context is <code>Just</code>. Otherwise, if either or both of
+ the contexts is <code>Nothing</code>, the combined context is <code>Nothing</code>.</p><p>For a more complicated example, and to better exhibit the structural, or
+ contextual nature of <code>f</code> let's use the tuple type, <code>(a,)</code>. The tuple type
+ carries extra information with it in its first element.</p><pre class="screen"><code class="prompt">&gt;&gt;&gt; </code><strong class="userinput"><code>id             (+3)  &lt;$&gt; (&quot;apple&quot;, 2)  -- Functor
+</code></strong>(&quot;apple&quot;,5)
+<code class="prompt">&gt;&gt;&gt; </code><strong class="userinput"><code>(&quot;banana&quot;,     (+3)) &lt;*&gt; (&quot;apple&quot;, 2)  -- Applicative
+</code></strong>(&quot;bananaapple&quot;,5)
+<code class="prompt">&gt;&gt;&gt; </code><strong class="userinput"><code>(,) &quot;cherry&quot; . (+3)  =&lt;&lt; (&quot;apple&quot;, 2)  -- Monad
+</code></strong>(&quot;applecherry&quot;,5)
+</pre><p>I'm using <code>id</code> just to keep the text aligned: <code>id (+3) == (+3)</code>.</p><p>The tuple type is carrying some context, <code>&quot;apple&quot;</code> in this case, in its
+ first element. For <code>Applicative</code> and <code>Monad</code>, they combine the contexts by
+ appending the strings. Indeed, if you 
+ <a href="https://hackage.haskell.org/package/base-4.10.0.0/docs/src/GHC.Base.html#line-338">check the documentation</a>,
+ you will see that the class instances have a <code>Monoid</code> constraint, meaning
+ that the contexts must be combinable using <code>mappend</code>:</p><pre>instance Monoid a =&gt; Applicative ((,) a) where
+  (u, f) &lt;*&gt; (v, x) = (u `mappend` v, f x)
+
+instance Monoid a -&gt; Monad ((,) a) where
+  k =&lt;&lt; (u, a) = case k a of (v, b) -&gt; (u `mappend` v, b)</pre><p>Study these examples until you feel comfortable with them. You can fire up
+ <code>ghci</code> and play around a bit.</p></div><h1 id="g:4">Context</h1><div class="doc"><p>Now look at how <code>Functor</code>, <code>Applicative</code>, and <code>Monad</code> interact with context:</p><ul><li><code>Functor</code> does not change the context at all, you operate on the values
+   inside that context. Given the <code>(&quot;apple&quot;,)</code> context, we produce the same
+   <code>(&quot;apple&quot;,)</code> context.</li><li><code>Applicative</code> combines contexts, but those contexts are already supplied
+   to the applicative operator. Given the <code>(&quot;banana&quot;,)</code> and the <code>(&quot;apple&quot;,)</code>
+   contexts, we combine them to create the new <code>(&quot;bananaapple&quot;,)</code> context.</li><li><code>Monad</code> also combined the two contexts, but the critical difference is
+   that <em>we supplied the new context ourself</em>.  The <code>(&quot;cherry&quot;,)</code> context was
+   provided by us, and we could have provided a different context, had we
+   chosen. We did not have that choice in the <code>Functor</code> and <code>Applicative</code>
+   case.</li></ul><pre class="screen"><code class="prompt">&gt;&gt;&gt; </code><strong class="userinput"><code>let foo x = if odd x then (&quot; is odd&quot;, x) else (&quot; is even&quot;, x)
+</code></strong><code class="prompt">&gt;&gt;&gt; </code><strong class="userinput"><code>foo =&lt;&lt; (&quot;apple&quot;, 3)
+</code></strong>(&quot;apple is odd&quot;,3)
+<code class="prompt">&gt;&gt;&gt; </code><strong class="userinput"><code>foo =&lt;&lt; (&quot;apple&quot;, 4)
+</code></strong>(&quot;apple is even&quot;,4)
+</pre><p>We are able to decide the context or structure of the result after examining
+ the value. There is no way to do this with the <code>Applicative</code> operator. I
+ encourage you to make the attempt until you convince yourself.</p></div><h1 id="g:5">Summary</h1><div class="doc"><p><code>Functor</code> allows you to perform computations within a context. That context
+ will not change.</p><p><code>Applicative</code> allows you to perform computations where every element of the
+ computation has a context, and those contexts are combined.</p><p><code>Monad</code> allows you to perform computations where you may <em>change</em> the
+ context on the basis of the computation.</p></div></div></div><div id="footer"><p>Produced by <a href="http://www.haskell.org/haddock/">Haddock</a> version 2.17.3</p></div></body></html>

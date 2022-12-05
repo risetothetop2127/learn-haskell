@@ -1,0 +1,7 @@
+resolver: lts-9.3
+packages:
+- .
+- ../gcj
+extra-deps: []
+flags: {}
+extra-package-dbs: []

@@ -1,0 +1,179 @@
+{-# LANGUAGE NoImplicitPrelude #-}
+
+module FunAppMon where
+
+import BasePrelude
+
+-- * Overview
+
+-- $ Let's gather the class descriptions from
+-- @<https://hackage.haskell.org/package/base-4.10.0.0/docs/Data-Functor.html Data.Functor>@,
+-- @<https://hackage.haskell.org/package/base-4.10.0.0/docs/Control-Applicative.html Control.Applicative>@, and
+-- @<https://hackage.haskell.org/package/base-4.10.0.0/docs/Control-Monad.html Control.Monad>@ in one place:
+--
+-- > class Functor f where
+-- >   (<$>) :: (a -> b) -> f a -> f b      -- operator version of fmap
+-- >
+-- > class Functor f => Applicative f where
+-- >   (<*>) :: f (a -> b) -> f a -> f b
+-- >   pure :: a -> f a
+-- >
+-- > class Applicative f => Monad f where
+-- >   (=<<) :: (a -> f b) -> f a -> f b    -- flipped bind operator
+-- >   return :: a -> f a
+--
+-- The meaning of @class /Foo/ x => /Bar/ x where ...@ is that every /Bar/ is a
+-- /Foo/. So every @Monad@ is an @Applicative@, and every @Applicative@ is a
+-- @Functor@.
+--
+-- For pedagogy, I am using the operator version of @fmap@, and the flipped version of the usual "bind" operator.
+--
+-- > (<$>) = fmap
+-- > (=<<) = flip (>>=)
+--
+-- This is just to use the most similar versions of all these operators. In
+-- actual code, you are free to use whichever version makes sense. For example:
+--
+-- > getCaps :: IO [String]
+-- > getCaps = fmap toUpper . words <$> getLine
+--
+-- This hypothetical code fragment uses both versions of @fmap@,
+-- because it seems convenient to do so.
+
+-- ** @pure@ and @return@
+
+-- $ The first thing to note is that @pure@ and @return@ are identical. If you
+-- examine
+-- <https://hackage.haskell.org/package/base-4.10.0.0/docs/src/GHC.Base.html the source>,
+-- you will find this definition:
+--
+-- >   return = pure
+--
+-- Both @pure@ and @return@ "inject" a value into the applicative or monadic type:
+--
+-- >>> pure 5 :: Maybe Int
+-- Just 5
+-- >>> return 'a' :: Either String Char
+-- Right 'a'
+--
+-- Why would you write @pure 5@ rather than @Just 5@? Well, suppose you
+-- anticipated that your applicative or monadic type might change in the
+-- future... if you use @pure@ you future-proof yourself. @pure@ says, "inject
+-- this value into the appropriate context, whatever that is."
+--
+-- In industrial strength Haskell applications, the context can be very
+-- involved, and having to reassemble it yourself just to inject a value into
+-- that context can be tedious at best!
+
+-- ** @fmap@, @\<*\>@, and @=<<@
+
+-- $ Let's gather the signatures of the operators together:
+--
+-- >   (<$>) ::   (a ->   b) -> f a -> f b  -- Functor
+-- >   (<*>) :: f (a ->   b) -> f a -> f b  -- Applicative
+-- >   (=<<) ::   (a -> f b) -> f a -> f b  -- Monad
+--
+-- First, observe the obvious similarity between these signatures. They vary
+-- only in the presence, absence, and position of the @f@ type in the first
+-- argument.
+--
+-- What is this @f@? Various guides will use metaphors, compare it to a
+-- burrito, etc, but I mostly think of it as a structure, or a context.
+--
+-- The canonical first example of an @f@ in most guides is @Maybe@:
+--
+-- >>> id     (+3) <$> Just 2  -- Functor
+-- Just 5
+-- >>> Just   (+3) <*> Just 2  -- Applicative
+-- Just 5
+-- >>> Just . (+3) =<< Just 2  -- Monad
+-- Just 5
+--
+-- I'm using @id@ just to keep the text aligned: @id (+3) == (+3)@.
+--
+-- Note that these example constructions exactly follow the above signatures.
+--
+--   * The @Functor@ example says, "apply this function to what's inside the
+--   @f@ context, and return the same context with the result."
+--
+--   * The @Applicative@ example says, "within the @f@ context, apply the
+--   function to the argument, combining the contexts."
+--
+--   * The @Monad@ example says, "apply the function to what's inside the @f@
+--   context, then create a new @f@ context to hold the result, combining the
+--   new context with the input context."
+--
+-- Notice that @Applicative@ and @Monad@ refer to /combining/ the contexts.
+-- (@Functor@ does not, because there is only the original context.)
+--
+-- That combining is pretty simple in the case of @Maybe@: if both contexts
+-- are @Just@, the combined context is @Just@. Otherwise, if either or both of
+-- the contexts is @Nothing@, the combined context is @Nothing@.
+--
+-- For a more complicated example, and to better exhibit the structural, or
+-- contextual nature of @f@ let's use the tuple type, @(a,)@. The tuple type
+-- carries extra information with it in its first element.
+--
+-- >>> id             (+3)  <$> ("apple", 2)  -- Functor
+-- ("apple",5)
+-- >>> ("banana",     (+3)) <*> ("apple", 2)  -- Applicative
+-- ("bananaapple",5)
+-- >>> (,) "cherry" . (+3)  =<< ("apple", 2)  -- Monad
+-- ("applecherry",5)
+--
+-- I'm using @id@ just to keep the text aligned: @id (+3) == (+3)@.
+--
+-- The tuple type is carrying some context, @"apple"@ in this case, in its
+-- first element. For @Applicative@ and @Monad@, they combine the contexts by
+-- appending the strings. Indeed, if you 
+-- <https://hackage.haskell.org/package/base-4.10.0.0/docs/src/GHC.Base.html#line-338 check the documentation>,
+-- you will see that the class instances have a @Monoid@ constraint, meaning
+-- that the contexts must be combinable using @mappend@:
+--
+-- > instance Monoid a => Applicative ((,) a) where
+-- >   (u, f) <*> (v, x) = (u `mappend` v, f x)
+-- >
+-- > instance Monoid a -> Monad ((,) a) where
+-- >   k =<< (u, a) = case k a of (v, b) -> (u `mappend` v, b)
+--
+-- Study these examples until you feel comfortable with them. You can fire up
+-- @ghci@ and play around a bit.
+
+-- * Context
+
+-- $ Now look at how @Functor@, @Applicative@, and @Monad@ interact with context:
+--
+--   * @Functor@ does not change the context at all, you operate on the values
+--   inside that context. Given the @("apple",)@ context, we produce the same
+--   @("apple",)@ context.
+--
+--   * @Applicative@ combines contexts, but those contexts are already supplied
+--   to the applicative operator. Given the @("banana",)@ and the @("apple",)@
+--   contexts, we combine them to create the new @("bananaapple",)@ context.
+--
+--   * @Monad@ also combined the two contexts, but the critical difference is
+--   that /we supplied the new context ourself/.  The @("cherry",)@ context was
+--   provided by us, and we could have provided a different context, had we
+--   chosen. We did not have that choice in the @Functor@ and @Applicative@
+--   case.
+--
+-- >>> let foo x = if odd x then (" is odd", x) else (" is even", x)
+-- >>> foo =<< ("apple", 3)
+-- ("apple is odd",3)
+-- >>> foo =<< ("apple", 4)
+-- ("apple is even",4)
+--
+-- We are able to decide the context or structure of the result after examining
+-- the value. There is no way to do this with the @Applicative@ operator. I
+-- encourage you to make the attempt until you convince yourself.
+
+-- * Summary
+
+-- $ @Functor@ allows you to perform computations within a context. That context
+-- will not change.
+--
+-- @Applicative@ allows you to perform computations where every element of the
+-- computation has a context, and those contexts are combined.
+--
+-- @Monad@ allows you to perform computations where you may /change/ the
+-- context on the basis of the computation.

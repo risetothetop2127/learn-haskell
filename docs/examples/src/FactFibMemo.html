@@ -1,0 +1,120 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><link rel="stylesheet" type="text/css" href="style.css" /><script type="text/javascript" src="highlight.js"></script></head><body><pre><span class="hs-pragma">{-# LANGUAGE NoImplicitPrelude #-}</span><span>
+</span><a name="line-2"></a><span>
+</span><a name="line-3"></a><span class="hs-keyword">module</span><span> </span><span class="hs-identifier">FactFibMemo</span><span> </span><span class="hs-keyword">where</span><span>
+</span><a name="line-4"></a><span>
+</span><a name="line-5"></a><span class="hs-keyword">import</span><span> </span><span class="hs-identifier">BasePrelude</span><span>
+</span><a name="line-6"></a><span>
+</span><a name="line-7"></a><span class="hs-comment">-- | A convenient abbreviation.</span><span>
+</span><a name="line-8"></a><span class="hs-keyword">type</span><span> </span><a name="Z"><a href="FactFibMemo.html#Z"><span class="hs-identifier">Z</span></a></a><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-identifier hs-type">Integer</span><span>
+</span><a name="line-9"></a><span>
+</span><a name="line-10"></a><span class="hs-comment">-- | An error we will use repeatedly.</span><span>
+</span><a name="line-11"></a><span class="hs-identifier">errorNegative</span><span> </span><span class="hs-glyph">::</span><span> </span><a href="#local-6989586621679018508"><span class="hs-identifier hs-type">a</span></a><span>
+</span><a name="line-12"></a><a name="errorNegative"><a href="FactFibMemo.html#errorNegative"><span class="hs-identifier">errorNegative</span></a></a><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-identifier hs-var">error</span><span> </span><span class="hs-string">&quot;negative integer&quot;</span><span>
+</span><a name="line-13"></a><span>
+</span><a name="line-14"></a><span class="hs-comment">-- * Factorial</span><span>
+</span><a name="line-15"></a><span>
+</span><a name="line-16"></a><span class="hs-comment">-- | Write the factorial function using explicit recursion. Your function should</span><span>
+</span><a name="line-17"></a><span class="hs-comment">-- look something like this:</span><span>
+</span><a name="line-18"></a><span class="hs-comment">-- </span><span>
+</span><a name="line-19"></a><span class="hs-comment">-- &gt; fact n = ... fact ...</span><span>
+</span><a name="line-20"></a><span class="hs-comment">--</span><span>
+</span><a name="line-21"></a><span class="hs-comment">-- Examples:</span><span>
+</span><a name="line-22"></a><span class="hs-comment">--</span><span>
+</span><a name="line-23"></a><span class="hs-comment">-- &gt;&gt;&gt; fact 5</span><span>
+</span><a name="line-24"></a><span class="hs-comment">-- 120</span><span>
+</span><a name="line-25"></a><span class="hs-comment">--</span><span>
+</span><a name="line-26"></a><span class="hs-comment">-- &gt;&gt;&gt; fact 10</span><span>
+</span><a name="line-27"></a><span class="hs-comment">-- 3628800</span><span>
+</span><a name="line-28"></a><span class="hs-identifier">fact</span><span> </span><span class="hs-glyph">::</span><span> </span><a href="FactFibMemo.html#Z"><span class="hs-identifier hs-type">Z</span></a><span> </span><span class="hs-glyph">-&gt;</span><span> </span><a href="FactFibMemo.html#Z"><span class="hs-identifier hs-type">Z</span></a><span>
+</span><a name="line-29"></a><a name="fact"><a href="FactFibMemo.html#fact"><span class="hs-identifier">fact</span></a></a><span> </span><a name="local-6989586621679018544"><a href="#local-6989586621679018544"><span class="hs-identifier">n</span></a></a><span> </span><span class="hs-glyph">|</span><span> </span><a href="#local-6989586621679018544"><span class="hs-identifier hs-var">n</span></a><span> </span><span class="hs-operator hs-var">&lt;</span><span> </span><span class="hs-number">0</span><span> </span><span class="hs-glyph">=</span><span> </span><a href="FactFibMemo.html#errorNegative"><span class="hs-identifier hs-var">errorNegative</span></a><span>
+</span><a name="line-30"></a><span class="hs-identifier">fact</span><span> </span><a name="local-6989586621679022111"><a href="#local-6989586621679022111"><span class="hs-identifier">n</span></a></a><span> </span><span class="hs-glyph">|</span><span> </span><a href="#local-6989586621679022111"><span class="hs-identifier hs-var">n</span></a><span> </span><span class="hs-operator hs-var">&lt;</span><span> </span><span class="hs-number">2</span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-number">1</span><span>
+</span><a name="line-31"></a><span class="hs-identifier">fact</span><span> </span><a name="local-6989586621679022112"><a href="#local-6989586621679022112"><span class="hs-identifier">n</span></a></a><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-identifier hs-var">undefined</span><span>
+</span><a name="line-32"></a><span>
+</span><a name="line-33"></a><span class="hs-comment">-- ** The Y-combinator</span><span>
+</span><a name="line-34"></a><span>
+</span><a name="line-35"></a><span class="hs-comment">-- | This is the Y-combinator. Here's the definition:</span><span>
+</span><a name="line-36"></a><span class="hs-comment">--</span><span>
+</span><a name="line-37"></a><span class="hs-comment">-- &gt; y f = f (y f)</span><span>
+</span><a name="line-38"></a><span class="hs-comment">--</span><span>
+</span><a name="line-39"></a><span class="hs-comment">-- A /combinator/, you will recall, is a point-free function.</span><span>
+</span><a name="line-40"></a><span class="hs-comment">-- What is it good for? Read on!</span><span>
+</span><a name="line-41"></a><span class="hs-identifier">y</span><span> </span><span class="hs-glyph">::</span><span> </span><span class="hs-special">(</span><a href="#local-6989586621679018507"><span class="hs-identifier hs-type">t</span></a><span> </span><span class="hs-glyph">-&gt;</span><span> </span><a href="#local-6989586621679018507"><span class="hs-identifier hs-type">t</span></a><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><a href="#local-6989586621679018507"><span class="hs-identifier hs-type">t</span></a><span>
+</span><a name="line-42"></a><a name="y"><a href="FactFibMemo.html#y"><span class="hs-identifier">y</span></a></a><span> </span><a name="local-6989586621679022113"><a href="#local-6989586621679022113"><span class="hs-identifier">f</span></a></a><span> </span><span class="hs-glyph">=</span><span> </span><a href="#local-6989586621679022113"><span class="hs-identifier hs-var">f</span></a><span> </span><span class="hs-special">(</span><a href="FactFibMemo.html#y"><span class="hs-identifier hs-var">y</span></a><span> </span><a href="#local-6989586621679022113"><span class="hs-identifier hs-var">f</span></a><span class="hs-special">)</span><span>
+</span><a name="line-43"></a><span>
+</span><a name="line-44"></a><span class="hs-comment">-- | Write @fact'@, a non-recursive version of @fact@, that takes an</span><span>
+</span><a name="line-45"></a><span class="hs-comment">-- additional argument as the function to call when the recursion takes place.</span><span>
+</span><a name="line-46"></a><span class="hs-comment">-- Your code will now look like this:</span><span>
+</span><a name="line-47"></a><span class="hs-comment">--</span><span>
+</span><a name="line-48"></a><span class="hs-comment">-- &gt; fact' f n = ... f ...</span><span>
+</span><a name="line-49"></a><span class="hs-comment">-- </span><span>
+</span><a name="line-50"></a><span class="hs-comment">-- Now try your function with the Y-combinator:</span><span>
+</span><a name="line-51"></a><span class="hs-comment">--</span><span>
+</span><a name="line-52"></a><span class="hs-comment">-- &gt;&gt;&gt; (y fact') 6</span><span>
+</span><a name="line-53"></a><span class="hs-comment">-- 720</span><span>
+</span><a name="line-54"></a><span class="hs-comment">--</span><span>
+</span><a name="line-55"></a><span class="hs-comment">-- Do you understand why this works? Try reducing @(y fact') 3@ by hand.</span><span>
+</span><a name="line-56"></a><span class="hs-identifier">fact'</span><span> </span><span class="hs-glyph">::</span><span> </span><span class="hs-special">(</span><a href="FactFibMemo.html#Z"><span class="hs-identifier hs-type">Z</span></a><span> </span><span class="hs-glyph">-&gt;</span><span> </span><a href="FactFibMemo.html#Z"><span class="hs-identifier hs-type">Z</span></a><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><a href="FactFibMemo.html#Z"><span class="hs-identifier hs-type">Z</span></a><span> </span><span class="hs-glyph">-&gt;</span><span> </span><a href="FactFibMemo.html#Z"><span class="hs-identifier hs-type">Z</span></a><span>
+</span><a name="line-57"></a><a name="fact%27"><a href="FactFibMemo.html#fact%27"><span class="hs-identifier">fact'</span></a></a><span> </span><span class="hs-identifier">_</span><span> </span><a name="local-6989586621679022114"><a href="#local-6989586621679022114"><span class="hs-identifier">n</span></a></a><span> </span><span class="hs-glyph">|</span><span> </span><a href="#local-6989586621679022114"><span class="hs-identifier hs-var">n</span></a><span> </span><span class="hs-operator hs-var">&lt;</span><span> </span><span class="hs-number">0</span><span> </span><span class="hs-glyph">=</span><span> </span><a href="FactFibMemo.html#errorNegative"><span class="hs-identifier hs-var">errorNegative</span></a><span>
+</span><a name="line-58"></a><span class="hs-identifier">fact'</span><span> </span><span class="hs-identifier">_</span><span> </span><a name="local-6989586621679022115"><a href="#local-6989586621679022115"><span class="hs-identifier">n</span></a></a><span> </span><span class="hs-glyph">|</span><span> </span><a href="#local-6989586621679022115"><span class="hs-identifier hs-var">n</span></a><span> </span><span class="hs-operator hs-var">&lt;</span><span> </span><span class="hs-number">2</span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-number">1</span><span>
+</span><a name="line-59"></a><span class="hs-identifier">fact'</span><span> </span><a name="local-6989586621679022116"><a href="#local-6989586621679022116"><span class="hs-identifier">f</span></a></a><span> </span><a name="local-6989586621679022117"><a href="#local-6989586621679022117"><span class="hs-identifier">n</span></a></a><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-identifier hs-var">undefined</span><span>
+</span><a name="line-60"></a><span>
+</span><a name="line-61"></a><span class="hs-comment">-- | Just to check that you do understand what's going on:</span><span>
+</span><a name="line-62"></a><span class="hs-comment">--</span><span>
+</span><a name="line-63"></a><span class="hs-comment">-- &gt;&gt;&gt; yesToFact</span><span>
+</span><a name="line-64"></a><span class="hs-comment">-- True</span><span>
+</span><a name="line-65"></a><span class="hs-identifier">yesToFact</span><span> </span><span class="hs-glyph">::</span><span> </span><span class="hs-identifier hs-type">Bool</span><span>
+</span><a name="line-66"></a><a name="yesToFact"><a href="FactFibMemo.html#yesToFact"><span class="hs-identifier">yesToFact</span></a></a><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-identifier hs-var">undefined</span><span> </span><span class="hs-comment">-- just fill this in with True</span><span>
+</span><a name="line-67"></a><span>
+</span><a name="line-68"></a><span class="hs-comment">-- * Fibonacci</span><span>
+</span><a name="line-69"></a><span>
+</span><a name="line-70"></a><span class="hs-comment">-- | Fibonacci is notorious, in that it takes a long time to compute. Define</span><span>
+</span><a name="line-71"></a><span class="hs-comment">-- 'fib' using explicit recursion:</span><span>
+</span><a name="line-72"></a><span class="hs-comment">--</span><span>
+</span><a name="line-73"></a><span class="hs-comment">-- &gt;&gt;&gt; fib 6</span><span>
+</span><a name="line-74"></a><span class="hs-comment">-- 8</span><span>
+</span><a name="line-75"></a><span class="hs-comment">--</span><span>
+</span><a name="line-76"></a><span class="hs-comment">-- Now try @mapM_ (print.fib) [0,10..40]@... you will wait a long time for 40!</span><span>
+</span><a name="line-77"></a><span class="hs-comment">-- Be prepared to ^C.</span><span>
+</span><a name="line-78"></a><span class="hs-identifier">fib</span><span> </span><span class="hs-glyph">::</span><span> </span><span class="hs-identifier hs-type">Int</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><a href="FactFibMemo.html#Z"><span class="hs-identifier hs-type">Z</span></a><span>
+</span><a name="line-79"></a><a name="fib"><a href="FactFibMemo.html#fib"><span class="hs-identifier">fib</span></a></a><span> </span><a name="local-6989586621679022118"><a href="#local-6989586621679022118"><span class="hs-identifier">n</span></a></a><span> </span><span class="hs-glyph">|</span><span> </span><a href="#local-6989586621679022118"><span class="hs-identifier hs-var">n</span></a><span> </span><span class="hs-operator hs-var">&lt;</span><span> </span><span class="hs-number">0</span><span> </span><span class="hs-glyph">=</span><span> </span><a href="FactFibMemo.html#errorNegative"><span class="hs-identifier hs-var">errorNegative</span></a><span>
+</span><a name="line-80"></a><span class="hs-identifier">fib</span><span> </span><span class="hs-number">0</span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-number">0</span><span>
+</span><a name="line-81"></a><span class="hs-identifier">fib</span><span> </span><span class="hs-number">1</span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-number">1</span><span>
+</span><a name="line-82"></a><span class="hs-identifier">fib</span><span> </span><a name="local-6989586621679022119"><a href="#local-6989586621679022119"><span class="hs-identifier">n</span></a></a><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-identifier hs-var">undefined</span><span>
+</span><a name="line-83"></a><span>
+</span><a name="line-84"></a><span class="hs-comment">-- | Let's do the same transformation we did for factorial:</span><span>
+</span><a name="line-85"></a><span class="hs-comment">--</span><span>
+</span><a name="line-86"></a><span class="hs-comment">-- &gt;&gt;&gt; (y fib') 6</span><span>
+</span><a name="line-87"></a><span class="hs-comment">-- 8</span><span>
+</span><a name="line-88"></a><span class="hs-identifier">fib'</span><span> </span><span class="hs-glyph">::</span><span> </span><span class="hs-special">(</span><span class="hs-identifier hs-type">Int</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><a href="FactFibMemo.html#Z"><span class="hs-identifier hs-type">Z</span></a><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-identifier hs-type">Int</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><a href="FactFibMemo.html#Z"><span class="hs-identifier hs-type">Z</span></a><span>
+</span><a name="line-89"></a><a name="fib%27"><a href="FactFibMemo.html#fib%27"><span class="hs-identifier">fib'</span></a></a><span> </span><span class="hs-identifier">_</span><span> </span><a name="local-6989586621679022120"><a href="#local-6989586621679022120"><span class="hs-identifier">n</span></a></a><span> </span><span class="hs-glyph">|</span><span> </span><a href="#local-6989586621679022120"><span class="hs-identifier hs-var">n</span></a><span> </span><span class="hs-operator hs-var">&lt;</span><span> </span><span class="hs-number">0</span><span> </span><span class="hs-glyph">=</span><span> </span><a href="FactFibMemo.html#errorNegative"><span class="hs-identifier hs-var">errorNegative</span></a><span>
+</span><a name="line-90"></a><span class="hs-identifier">fib'</span><span> </span><span class="hs-identifier">_</span><span> </span><span class="hs-number">0</span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-number">0</span><span>
+</span><a name="line-91"></a><span class="hs-identifier">fib'</span><span> </span><span class="hs-identifier">_</span><span> </span><span class="hs-number">1</span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-number">1</span><span>
+</span><a name="line-92"></a><span class="hs-identifier">fib'</span><span> </span><a name="local-6989586621679022121"><a href="#local-6989586621679022121"><span class="hs-identifier">f</span></a></a><span> </span><a name="local-6989586621679022122"><a href="#local-6989586621679022122"><span class="hs-identifier">n</span></a></a><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-identifier hs-var">undefined</span><span>
+</span><a name="line-93"></a><span>
+</span><a name="line-94"></a><span class="hs-comment">-- * Memoization</span><span>
+</span><a name="line-95"></a><span>
+</span><a name="line-96"></a><span class="hs-comment">-- | Now we'll /memoize/ this function. I'm going to give you the definition. If you copy this into the code itself, the example will work. The question is, do you understand why?</span><span>
+</span><a name="line-97"></a><span class="hs-comment">-- It's not obvious. Work your way</span><span>
+</span><a name="line-98"></a><span class="hs-comment">-- through it. I suggest reducing a small example by hand:</span><span>
+</span><a name="line-99"></a><span class="hs-comment">--</span><span>
+</span><a name="line-100"></a><span class="hs-comment">-- &gt; (y (memo . fib')) 3</span><span>
+</span><a name="line-101"></a><span class="hs-comment">--</span><span>
+</span><a name="line-102"></a><span class="hs-comment">-- Here's the definition:</span><span>
+</span><a name="line-103"></a><span class="hs-comment">-- </span><span>
+</span><a name="line-104"></a><span class="hs-comment">-- &gt; memo f = (map f [0..] !!)</span><span>
+</span><a name="line-105"></a><span class="hs-comment">--</span><span>
+</span><a name="line-106"></a><span class="hs-comment">-- &gt;&gt;&gt; (y (memo . fib')) 6</span><span>
+</span><a name="line-107"></a><span class="hs-comment">-- 8</span><span>
+</span><a name="line-108"></a><span class="hs-comment">--</span><span>
+</span><a name="line-109"></a><span class="hs-comment">-- &gt;&gt;&gt; (y (memo . fib')) 100</span><span>
+</span><a name="line-110"></a><span class="hs-comment">-- 354224848179261915075</span><span>
+</span><a name="line-111"></a><span class="hs-identifier">memo</span><span> </span><span class="hs-glyph">::</span><span> </span><span class="hs-special">(</span><span class="hs-identifier hs-type">Int</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><a href="#local-6989586621679018506"><span class="hs-identifier hs-type">a</span></a><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-special">(</span><span class="hs-identifier hs-type">Int</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><a href="#local-6989586621679018506"><span class="hs-identifier hs-type">a</span></a><span class="hs-special">)</span><span>
+</span><a name="line-112"></a><a name="memo"><a href="FactFibMemo.html#memo"><span class="hs-identifier">memo</span></a></a><span> </span><a name="local-6989586621679022123"><a href="#local-6989586621679022123"><span class="hs-identifier">f</span></a></a><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-special">(</span><span class="hs-identifier hs-var">map</span><span> </span><a href="#local-6989586621679022123"><span class="hs-identifier hs-var">f</span></a><span> </span><span class="hs-special">[</span><span class="hs-number">0</span><span class="hs-glyph">..</span><span class="hs-special">]</span><span> </span><span class="hs-operator hs-var">!!</span><span class="hs-special">)</span><span>
+</span><a name="line-113"></a><span>
+</span><a name="line-114"></a><span class="hs-comment">-- | Just to check that you do understand what's going on:</span><span>
+</span><a name="line-115"></a><span class="hs-comment">--</span><span>
+</span><a name="line-116"></a><span class="hs-comment">-- &gt;&gt;&gt; yesToMemo</span><span>
+</span><a name="line-117"></a><span class="hs-comment">-- True</span><span>
+</span><a name="line-118"></a><span class="hs-identifier">yesToMemo</span><span> </span><span class="hs-glyph">::</span><span> </span><span class="hs-identifier hs-type">Bool</span><span>
+</span><a name="line-119"></a><a name="yesToMemo"><a href="FactFibMemo.html#yesToMemo"><span class="hs-identifier">yesToMemo</span></a></a><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-identifier hs-var">undefined</span><span> </span><span class="hs-comment">-- just fill this in with True</span><span>
+</span><a name="line-120"></a></pre></body></html>

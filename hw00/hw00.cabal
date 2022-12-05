@@ -1,0 +1,19 @@
+name:                hw00
+version:             0.1.0.0
+cabal-version:       >=1.10
+
+library
+  hs-source-dirs:      src
+  exposed-modules:     HW00
+  ghc-options:         -Wall
+  default-language:    Haskell2010
+  build-depends:       base >= 4.7 && < 5
+
+executable hello-exe
+  hs-source-dirs:      hello
+  main-is:             Main.hs
+  ghc-options:         -Wall
+  default-language:    Haskell2010
+  build-depends:       base
+   , gcj
+   , hw00
